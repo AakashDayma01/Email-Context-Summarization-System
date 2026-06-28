@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2 class="mb-3">
+
+{{ client.name }}
+
+</h2>
+
+<div class="mb-4">
+
+<strong>Firm :</strong>
+
+{{ client.firm.name }}
+
+</div>
+
+<div class="row">
+
+<div class="col-md-6">
+
+<div class="card mb-4">
+
+<div class="card-header bg-primary text-white">
+
+Email Conversation
+
+</div>
+
+<div class="card-body">
+
+{% for email in emails %}
+
+<div class="border-bottom mb-3 pb-2">
+
+<h6>{{ email.subject }}</h6>
+
+<p>{{ email.body }}</p>
+
+<small class="text-muted">
+
+{{ email.accountant.email }}
+
+</small>
+
+</div>
+
+{% empty %}
+
+No emails found.
+
+{% endfor %}
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-md-6">
+
+<div class="card">
+
+<div class="card-header bg-success text-white">
+
+Summary
+
+</div>
+
+<div class="card-body">
+
+{% if summary %}
+
+<h5>Actors</h5>
+
+<ul>
+
+{% for actor in summary.actors %}
+
+<li>{{ actor }}</li>
+
+{% endfor %}
+
+</ul>
+
+<hr>
+
+<h5>Concluded Discussions</h5>
+
+<ul>
+
+{% for item in summary.concluded_discussions %}
+
+<li>{{ item }}</li>
+
+{% empty %}
+
+<li>None</li>
+
+{% endfor %}
+
+</ul>
+
+<hr>
+
+<h5>Open Action Items</h5>
+
+<ul>
+
+{% for item in summary.open_action_items %}
+
+<li>{{ item }}</li>
+
+{% empty %}
+
+<li>None</li>
+
+{% endfor %}
+
+</ul>
+
+{% else %}
+
+<div class="alert alert-warning">
+
+Summary not generated yet.
+
+</div>
+
+{% endif %}
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="mt-4">
+
+<a href="{% url 'generate-summary-page' client.id %}" class="btn btn-success">
+
+Generate Summary
+
+</a>
+
+<a href="{% url 'refresh-summary-page' client.id %}" class="btn btn-warning">
+    Refresh Summary
+</a>
+
+</div>
+
+{% endblock %}

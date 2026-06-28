@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2 class="mb-4">
+
+Dashboard
+
+</h2>
+
+<div class="row">
+
+    <div class="col-md-4">
+
+        <div class="card p-4">
+
+            <h5>Total Clients</h5>
+
+            <h1>{{ total_clients }}</h1>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-4">
+
+        <div class="card p-4">
+
+            <h5>Total Emails</h5>
+
+            <h1>{{ total_emails }}</h1>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-4">
+
+        <div class="card p-4">
+
+            <h5>Summaries</h5>
+
+            <h1>{{ total_summaries }}</h1>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

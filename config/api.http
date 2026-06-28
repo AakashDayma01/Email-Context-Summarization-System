@@ -1,0 +1,34 @@
+### Login
+POST http://127.0.0.1:8000/api/token/
+Content-Type: application/json
+
+{
+    "email": "akash.dayma@thoughtwin.com",
+    "password": "aakash@123"
+}
+
+###
+
+### Get Clients
+GET http://127.0.0.1:8000/api/clients/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgyNjM1NzI5LCJpYXQiOjE3ODI2MzM5MjksImp0aSI6IjFlMDlkNGRmZWUwYjQ5MGZhZThmYjBmM2U3NmZhMjNmIiwidXNlcl9pZCI6IjIifQ.bx3HRYRPGCsmWpBCcdk-EAbDu--ZHLKPLI0Dx6mlEkI
+
+
+### Get Emails for Client 1
+GET http://127.0.0.1:8000/api/1/emails/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgyNjM1NzI5LCJpYXQiOjE3ODI2MzM5MjksImp0aSI6IjFlMDlkNGRmZWUwYjQ5MGZhZThmYjBmM2U3NmZhMjNmIiwidXNlcl9pZCI6IjIifQ.bx3HRYRPGCsmWpBCcdk-EAbDu--ZHLKPLI0Dx6mlEkI
+
+### Generate Summary
+POST http://127.0.0.1:8000/api/clients/1/summary/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgyNjQwNzYxLCJpYXQiOjE3ODI2Mzg5NjEsImp0aSI6Ijc2ZWJjZmZlYWYwMDQ0ZWE5MWJjMTQwMzRiM2VmMDVhIiwidXNlcl9pZCI6IjEifQ.jH3eLTPdvnof_j_fD8CmZfmhw99T8Ja9-mBLY9cBAJo
+### Refresh Summary
+POST http://127.0.0.1:8000/api/clients/1/summary/refresh/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgyNjM1NzI5LCJpYXQiOjE3ODI2MzM5MjksImp0aSI6IjFlMDlkNGRmZWUwYjQ5MGZhZThmYjBmM2U3NmZhMjNmIiwidXNlcl9pZCI6IjIifQ.bx3HRYRPGCsmWpBCcdk-EAbDu--ZHLKPLI0Dx6mlEkI
+
+### Firm Report
+GET http://127.0.0.1:8000/api/reports/firm/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgyNjM1NzI5LCJpYXQiOjE3ODI2MzM5MjksImp0aSI6IjFlMDlkNGRmZWUwYjQ5MGZhZThmYjBmM2U3NmZhMjNmIiwidXNlcl9pZCI6IjIifQ.bx3HRYRPGCsmWpBCcdk-EAbDu--ZHLKPLI0Dx6mlEkI
+
+### Global Report
+GET http://127.0.0.1:8000/api/reports/global/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgyNjM2NjI2LCJpYXQiOjE3ODI2MzQ4MjYsImp0aSI6IjJjMDg4NDZkMDU2MDQyOTY5YTUzODk5MWQ5MzRmMTgzIiwidXNlcl9pZCI6IjEifQ.llHofTfHQQ5BQe9zCY-twtsqDwSMKiDjx-srPSqYai4
