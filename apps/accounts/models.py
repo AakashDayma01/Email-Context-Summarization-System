@@ -14,19 +14,9 @@ class Account(AbstractUser):
 
     email = models.EmailField(unique=True)
 
-    firm = models.ForeignKey(
-        "firms.Firm",
-        on_delete=models.CASCADE,
-        related_name="accountants",
-        null=True,
-        blank=True,
-    )
+    firm = models.ForeignKey("firms.Firm", on_delete=models.CASCADE, related_name="accountants", null=True, blank=True,)
 
-    role = models.CharField(
-        max_length=20,
-        choices=Role.choices,
-        default=Role.ACCOUNTANT,
-    )
+    role = models.CharField(max_length=20, choices=Role.choices, default=Role.ACCOUNTANT,)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]

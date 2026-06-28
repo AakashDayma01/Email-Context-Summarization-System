@@ -2,153 +2,237 @@
 
 {% block content %}
 
-<h2 class="mb-3">
+<div class="container">
 
-{{ client.name }}
+    <!-- Client Information -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="mb-2">{{ client.name }}</h2>
 
-</h2>
+            <p class="mb-1">
+                <strong>Firm:</strong> {{ client.firm.name }}
+            </p>
 
-<div class="mb-4">
+            <p class="mb-0">
+                <strong>Total Emails:</strong> {{ emails|length }}
+            </p>
+        </div>
+    </div>
 
-<strong>Firm :</strong>
+    <div class="row">
 
-{{ client.firm.name }}
+        <!-- Left Column -->
+        <div class="col-lg-6">
 
-</div>
+            <!-- Email Conversation -->
+            <div class="card shadow-sm mb-4">
 
-<div class="row">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Email Conversation</h5>
+                </div>
 
-<div class="col-md-6">
+                <div class="card-body">
 
-<div class="card mb-4">
+                    {% for email in emails %}
 
-<div class="card-header bg-primary text-white">
+                    <div class="border rounded p-3 mb-3">
 
-Email Conversation
+                        <h6 class="fw-bold">
+                            {{ email.subject }}
+                        </h6>
 
-</div>
+                        <p class="mb-2">
+                            {{ email.body }}
+                        </p>
 
-<div class="card-body">
+                        <small class="text-muted">
 
-{% for email in emails %}
+                            <strong>From:</strong>
+                            {{ email.accountant.email }}
 
-<div class="border-bottom mb-3 pb-2">
+                            <br>
 
-<h6>{{ email.subject }}</h6>
+                            <strong>Sent:</strong>
+                            {{ email.sent_at }}
 
-<p>{{ email.body }}</p>
+                        </small>
 
-<small class="text-muted">
+                    </div>
 
-{{ email.accountant.email }}
+                    {% empty %}
 
-</small>
+                    <div class="alert alert-warning">
 
-</div>
+                        No email conversations found.
 
-{% empty %}
+                    </div>
 
-No emails found.
+                    {% endfor %}
 
-{% endfor %}
+                </div>
 
-</div>
+            </div>
 
-</div>
+            <!-- Add Email -->
+            <div class="card shadow-sm">
 
-</div>
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Add Mock Email</h5>
+                </div>
 
-<div class="col-md-6">
+                <div class="card-body">
 
-<div class="card">
+                    <form method="post"
+                          action="{% url 'add-email' client.id %}">
 
-<div class="card-header bg-success text-white">
+                        {% csrf_token %}
 
-Summary
+                        <div class="mb-3">
 
-</div>
+                            <label class="form-label">
+                                Subject
+                            </label>
 
-<div class="card-body">
+                            <input
+                                type="text"
+                                name="subject"
+                                class="form-control"
+                                placeholder="Enter email subject"
+                                required>
 
-{% if summary %}
+                        </div>
 
-<h5>Actors</h5>
+                        <div class="mb-3">
 
-<ul>
+                            <label class="form-label">
+                                Email Body
+                            </label>
 
-{% for actor in summary.actors %}
+                            <textarea
+                                name="body"
+                                rows="5"
+                                class="form-control"
+                                placeholder="Enter email content"
+                                required></textarea>
 
-<li>{{ actor }}</li>
+                        </div>
 
-{% endfor %}
+                        <button class="btn btn-primary">
 
-</ul>
+                            Add Email
 
-<hr>
+                        </button>
 
-<h5>Concluded Discussions</h5>
+                    </form>
 
-<ul>
+                </div>
 
-{% for item in summary.concluded_discussions %}
+            </div>
 
-<li>{{ item }}</li>
+        </div>
 
-{% empty %}
+        <!-- Right Column -->
+        <div class="col-lg-6">
 
-<li>None</li>
+            <div class="card shadow-sm">
 
-{% endfor %}
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        AI Generated Summary
+                    </h5>
+                </div>
 
-</ul>
+                <div class="card-body">
 
-<hr>
+                    {% if summary %}
 
-<h5>Open Action Items</h5>
+                    <h5>Actors Involved</h5>
 
-<ul>
+                    <ul>
 
-{% for item in summary.open_action_items %}
+                        {% for actor in summary.actors %}
 
-<li>{{ item }}</li>
+                        <li>{{ actor }}</li>
 
-{% empty %}
+                        {% endfor %}
 
-<li>None</li>
+                    </ul>
 
-{% endfor %}
+                    <hr>
 
-</ul>
+                    <h5>Concluded Discussions</h5>
 
-{% else %}
+                    <ul>
 
-<div class="alert alert-warning">
+                        {% for item in summary.concluded_discussions %}
 
-Summary not generated yet.
+                        <li>{{ item }}</li>
 
-</div>
+                        {% empty %}
 
-{% endif %}
+                        <li>No concluded discussions.</li>
 
-</div>
+                        {% endfor %}
 
-</div>
+                    </ul>
 
-</div>
+                    <hr>
 
-</div>
+                    <h5>Open Action Items</h5>
 
-<div class="mt-4">
+                    <ul>
 
-<a href="{% url 'generate-summary-page' client.id %}" class="btn btn-success">
+                        {% for item in summary.open_action_items %}
 
-Generate Summary
+                        <li>{{ item }}</li>
 
-</a>
+                        {% empty %}
 
-<a href="{% url 'refresh-summary-page' client.id %}" class="btn btn-warning">
-    Refresh Summary
-</a>
+                        <li>No pending action items.</li>
+
+                        {% endfor %}
+
+                    </ul>
+
+                    {% else %}
+
+                    <div class="alert alert-warning">
+
+                        <strong>No Summary Available</strong>
+
+                        <br>
+
+                        Click <strong>Generate Summary</strong> to create an AI summary from the email conversation.
+
+                    </div>
+
+                    {% endif %}
+
+                </div>
+
+                <div class="card-footer text-center">
+
+                    <a href="{% url 'generate-summary-page' client.id %}"
+                       class="btn btn-success me-2">
+
+                        Generate Summary
+
+                    </a>
+
+                    <a href="{% url 'refresh-summary-page' client.id %}"
+                       class="btn btn-warning">
+
+                        Refresh Summary
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
 
 </div>
 

@@ -39,12 +39,13 @@ class ClientDetailAPIView(generics.RetrieveAPIView):
 
 @login_required
 def client_list(request):
-    clients = Client.objects.select_related("firm").all()
 
-    context = { "clients": clients }
+    if request.user.is_superuser:
+        clients = Client.objects.select_related("firm").all()
+    else:
+        clients = Client.objects.select_related("firm").filter(firm=request.user.firm)
 
-    return render(request, "clients/list.html", context)
-
+    return render(request, "clients/list.html", { "clients": clients })
 
 @login_required
 def client_detail(request, pk):

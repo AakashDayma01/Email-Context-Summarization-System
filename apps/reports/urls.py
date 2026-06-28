@@ -1,8 +1,11 @@
 from django.urls import path
-from .views import dashboard, reports_page, FirmReportAPIView, GlobalReportAPIView
+
+from .views import firm_report, global_report, firm_report, FirmReportAPIView, GlobalReportAPIView
 
 urlpatterns = [
-    path("", reports_page, name="report-dashboard"),
-    path("firm/", FirmReportAPIView.as_view()),
-    path("global/", GlobalReportAPIView.as_view()),
+    path("", firm_report, name="report-dashboard",),
+    path("firm/", firm_report, name="firm-report"),
+    path("global/", global_report, name="global-report-page",),
+    path("api/", FirmReportAPIView.as_view(), name="firm-report-api",),
+    path("api/global/", GlobalReportAPIView.as_view(), name="global-report-api",),
 ]

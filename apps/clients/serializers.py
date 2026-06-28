@@ -3,9 +3,7 @@ from .models import Client
 
 
 class ClientSerializer(serializers.ModelSerializer):
-
     firm = serializers.StringRelatedField()
-
     class Meta:
         model = Client
         fields = [

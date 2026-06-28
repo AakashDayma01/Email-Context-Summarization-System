@@ -37,7 +37,7 @@ urlpatterns = [
     path("logout/", logout_view, name="logout"),
     path("clients/", include("apps.clients.urls")),
     path("summary/", include("apps.summaries.urls")),
-
+    path("reports/", include("apps.reports.urls")),    
 
     path("api/token/", TokenObtainPairView.as_view()),
     path("api/token/refresh/", TokenRefreshView.as_view()),

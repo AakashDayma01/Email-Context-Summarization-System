@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2 class="mb-4">Firm Report</h2>
+
+<div class="card shadow">
+
+    <div class="card-body">
+
+        <h4>{{ firm.name }}</h4>
+
+        <hr>
+
+        <p>
+
+            <strong>Total Clients :</strong>
+
+            {{ total_clients }}
+
+        </p>
+
+        <p>
+
+            <strong>Clients With Summary :</strong>
+
+            {{ clients_with_summary }}
+
+        </p>
+
+    </div>
+
+</div>
+
+{% endblock %}
