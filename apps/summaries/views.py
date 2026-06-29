@@ -1,6 +1,5 @@
 from django.shortcuts import render
 
-# Create your views here.
 import json
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -17,17 +16,34 @@ from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 
 
-
-import json
-
 class GenerateSummaryAPIView(APIView):
+    """
+    API view to generate email summary for a specific client.
+
+    Workflow:
+    - Checks Redis cache first
+    - If not found, generates summary from emails
+    - Stores summary in Redis (cache)
+    - Encrypts summary and stores in database
+
+    Returns:
+    - cached summary if available
+    - otherwise newly generated summary
+    """
     permission_classes = [IsAuthenticated]
+
     def post(self, request, pk):
+        """
+        Handle POST request to generate or fetch email summary.
+        """
         cache_key = f"summary_{pk}"
-        # 1. Check cache first
+
         cached_data = cache.get(cache_key)
         if cached_data:
-            return Response({"source": "cache", "data": cached_data})
+            return Response({
+                "source": "cache",
+                "data": cached_data
+            })
 
         client = Client.objects.get(id=pk)
         emails = Email.objects.filter(client=client)
@@ -35,13 +51,12 @@ class GenerateSummaryAPIView(APIView):
         if not emails.exists():
             return Response({"error": "No emails found"})
 
-        # 2. Generate summary
         summary_data = generate_summary(emails)
 
-        # 3. Encrypt
+        cache.set(cache_key, summary_data, timeout=3600)
+
         encrypted = encrypt(json.dumps(summary_data))
 
-        # 4. Save DB
         summary_obj, created = EmailSummary.objects.get_or_create(
             client=client,
             defaults={
@@ -55,52 +70,75 @@ class GenerateSummaryAPIView(APIView):
             summary_obj.emails_processed = emails.count()
             summary_obj.save()
 
-        # 5. Store cache (IMPORTANT)
-        cache.set(cache_key, summary_data, timeout=3600)
-
         return Response({
-            "source": "db",
+            "source": "generated",
             "data": summary_data
         })
-    
-    
+
+
 class RefreshSummaryAPIView(APIView):
+    """
+    API view to refresh email summary for a client.
+
+    Clears cached summary and regenerates it.
+    """
     permission_classes = [IsAuthenticated]
+
     def post(self, request, pk):
+        """
+        Handle POST request to refresh summary.
+        """
         cache.delete(f"summary_{pk}")
 
         generator = GenerateSummaryAPIView()
         return generator.post(request, pk)
-    
 
 
 @login_required
 def generate_summary_page(request, pk):
+    """
+    Generate email summary for a client via web page.
+
+    Steps:
+    - Fetch client emails
+    - Generate summary
+    - Store in Redis cache
+    - Encrypt and save in database
+    - Redirect to client detail page
+    """
     client = get_object_or_404(Client, pk=pk)
+
     emails = Email.objects.filter(client=client)
+
     if not emails.exists():
-        return redirect("client-detail-page", pk=pk)
+        return redirect("client-detail", pk=pk)
+
     summary_data = generate_summary(emails)
+
+    cache.set(f"summary_{pk}", summary_data, timeout=3600)
+
     encrypted = encrypt(json.dumps(summary_data))
-    summary, created = EmailSummary.objects.get_or_create(
-        client=client
-    )
+
+    summary, created = EmailSummary.objects.get_or_create(client=client)
 
     summary.encrypted_summary = encrypted
     summary.emails_processed = emails.count()
     summary.save()
 
-    cache.set(f"summary_{pk}", summary_data, timeout=3600)
     return redirect("client-detail", pk=pk)
-
-
 
 
 @login_required
 def refresh_summary_page(request, pk):
-    # Remove cached summary
+    """
+    Refresh email summary from web interface.
+
+    Actions:
+    - Delete cached summary
+    - Delete existing DB summary
+    - Regenerate fresh summary
+    """
     cache.delete(f"summary_{pk}")
-    # Remove existing summary from database
     EmailSummary.objects.filter(client_id=pk).delete()
-    # Generate a new summary
+
     return generate_summary_page(request, pk)

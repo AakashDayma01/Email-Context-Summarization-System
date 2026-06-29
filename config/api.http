@@ -9,26 +9,45 @@ Content-Type: application/json
 
 ###
 
+### Copy the ACCESS token from the login response
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgyNzI0MTg2LCJpYXQiOjE3ODI3MjIzODYsImp0aSI6IjNjYmJkNWQxYjE1YjQ5MmQ4MjNjNWJkODY4ZmM4YjVkIiwidXNlcl9pZCI6IjMifQ.OpsxeBQbY37eyV-8sOOnhARUaSoR1X6nsGUpsgomO18
+
 ### Get Clients
 GET http://127.0.0.1:8000/api/clients/
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgyNjM1NzI5LCJpYXQiOjE3ODI2MzM5MjksImp0aSI6IjFlMDlkNGRmZWUwYjQ5MGZhZThmYjBmM2U3NmZhMjNmIiwidXNlcl9pZCI6IjIifQ.bx3HRYRPGCsmWpBCcdk-EAbDu--ZHLKPLI0Dx6mlEkI
+Authorization: Bearer {{token}}
 
+###
 
-### Get Emails for Client 1
+### Get Client Detail
+GET http://127.0.0.1:8000/api/clients/1/
+Authorization: Bearer {{token}}
+
+###
+
+### Get Emails
 GET http://127.0.0.1:8000/api/1/emails/
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgyNjM1NzI5LCJpYXQiOjE3ODI2MzM5MjksImp0aSI6IjFlMDlkNGRmZWUwYjQ5MGZhZThmYjBmM2U3NmZhMjNmIiwidXNlcl9pZCI6IjIifQ.bx3HRYRPGCsmWpBCcdk-EAbDu--ZHLKPLI0Dx6mlEkI
+Authorization: Bearer {{token}}
+
+###
 
 ### Generate Summary
-POST http://127.0.0.1:8000/api/clients/1/summary/
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgyNjQwNzYxLCJpYXQiOjE3ODI2Mzg5NjEsImp0aSI6Ijc2ZWJjZmZlYWYwMDQ0ZWE5MWJjMTQwMzRiM2VmMDVhIiwidXNlcl9pZCI6IjEifQ.jH3eLTPdvnof_j_fD8CmZfmhw99T8Ja9-mBLY9cBAJo
+POST http://127.0.0.1:8000/api/1/summary/
+Authorization: Bearer {{token}}
+
+###
+
 ### Refresh Summary
-POST http://127.0.0.1:8000/api/clients/1/summary/refresh/
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgyNjM1NzI5LCJpYXQiOjE3ODI2MzM5MjksImp0aSI6IjFlMDlkNGRmZWUwYjQ5MGZhZThmYjBmM2U3NmZhMjNmIiwidXNlcl9pZCI6IjIifQ.bx3HRYRPGCsmWpBCcdk-EAbDu--ZHLKPLI0Dx6mlEkI
+POST http://127.0.0.1:8000/api/1/summary/refresh/
+Authorization: Bearer {{token}}
+
+###
 
 ### Firm Report
-GET http://127.0.0.1:8000/api/reports/firm/
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgyNjM1NzI5LCJpYXQiOjE3ODI2MzM5MjksImp0aSI6IjFlMDlkNGRmZWUwYjQ5MGZhZThmYjBmM2U3NmZhMjNmIiwidXNlcl9pZCI6IjIifQ.bx3HRYRPGCsmWpBCcdk-EAbDu--ZHLKPLI0Dx6mlEkI
+GET http://127.0.0.1:8000/api/reports/api/
+Authorization: Bearer {{token}}
+
+###
 
 ### Global Report
-GET http://127.0.0.1:8000/api/reports/global/
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgyNjM2NjI2LCJpYXQiOjE3ODI2MzQ4MjYsImp0aSI6IjJjMDg4NDZkMDU2MDQyOTY5YTUzODk5MWQ5MzRmMTgzIiwidXNlcl9pZCI6IjEifQ.llHofTfHQQ5BQe9zCY-twtsqDwSMKiDjx-srPSqYai4
+GET http://127.0.0.1:8000/api/reports/api/global/
+Authorization: Bearer {{token}}

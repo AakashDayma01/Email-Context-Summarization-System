@@ -6,6 +6,13 @@ from django.db import models
 
 
 class Email(models.Model):
+    """
+    Represents an email associated with a client.
+
+    Each email is linked to a client and the accountant who created
+    or manages it. Email records are used as the primary input for
+    generating AI-powered contextual summaries.
+    """
 
     client = models.ForeignKey("clients.Client", on_delete=models.CASCADE, related_name="emails",)
     accountant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="emails",)

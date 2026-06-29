@@ -1,0 +1,408 @@
+openapi: 3.0.3
+info:
+  title: Email Context & Summarization API
+  version: 1.0.0
+  description: |2
+
+    API for managing firms, clients, emails and AI generated summaries.
+
+    Authentication:
+    - Obtain JWT Token
+    - Use Bearer Token
+    - Access secured endpoints
+paths:
+  /api/{id}/emails/:
+    get:
+      operationId: api_emails_list
+      description: |-
+        API view to list all emails related to a specific client.
+
+        Superusers can access all emails for the client,
+        while normal users can only access emails belonging to clients
+        within their firm.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Email'
+          description: ''
+  /api/{id}/summary/:
+    post:
+      operationId: api_summary_create
+      description: Handle POST request to generate or fetch email summary.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/{id}/summary/refresh/:
+    post:
+      operationId: api_summary_refresh_create
+      description: Handle POST request to refresh summary.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/clients/:
+    get:
+      operationId: api_clients_list
+      description: |-
+        API view to retrieve a list of clients.
+
+        Superusers can access all clients, while regular users
+        can only access clients belonging to their firm.
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+          description: ''
+  /api/clients/{id}/:
+    get:
+      operationId: api_clients_retrieve
+      description: |-
+        API view to retrieve a single client detail.
+
+        Access is restricted based on user permissions:
+        superusers can access all clients, others only their firm clients.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+          description: ''
+  /api/reports/api/:
+    get:
+      operationId: api_reports_api_retrieve
+      description: Handle GET request and return firm-level analytics.
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/reports/api/global/:
+    get:
+      operationId: api_reports_api_global_retrieve
+      description: Handle GET request and return summary count per firm.
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/token/:
+    post:
+      operationId: api_token_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenObtainPair'
+          description: ''
+  /api/token/refresh/:
+    post:
+      operationId: api_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /clients/:
+    get:
+      operationId: clients_list
+      description: |-
+        API view to retrieve a list of clients.
+
+        Superusers can access all clients, while regular users
+        can only access clients belonging to their firm.
+      tags:
+      - clients
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+          description: ''
+  /clients/{id}/:
+    get:
+      operationId: clients_retrieve
+      description: |-
+        API view to retrieve a single client detail.
+
+        Access is restricted based on user permissions:
+        superusers can access all clients, others only their firm clients.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - clients
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+          description: ''
+  /reports/api/:
+    get:
+      operationId: reports_api_retrieve
+      description: Handle GET request and return firm-level analytics.
+      tags:
+      - reports
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /reports/api/global/:
+    get:
+      operationId: reports_api_global_retrieve
+      description: Handle GET request and return summary count per firm.
+      tags:
+      - reports
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /summary/{id}/summary/:
+    post:
+      operationId: summary_summary_create
+      description: Handle POST request to generate or fetch email summary.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - summary
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /summary/{id}/summary/refresh/:
+    post:
+      operationId: summary_summary_refresh_create
+      description: Handle POST request to refresh summary.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - summary
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+components:
+  schemas:
+    Client:
+      type: object
+      description: |-
+        Serializer for the Client model.
+
+        Converts Client model instances into JSON format for API responses.
+        The associated firm is represented using its string representation
+        instead of its primary key.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        phone:
+          type: string
+          nullable: true
+          maxLength: 20
+        firm:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - email
+      - firm
+      - id
+      - name
+    Email:
+      type: object
+      description: |-
+        Serializer for the Email model.
+
+        Converts Email model instances into JSON format for API responses.
+        The associated client and accountant are represented using their
+        string representations instead of their primary keys.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        subject:
+          type: string
+          maxLength: 255
+        body:
+          type: string
+        client:
+          type: string
+          readOnly: true
+        accountant:
+          type: string
+          readOnly: true
+        sent_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - accountant
+      - body
+      - client
+      - id
+      - sent_at
+      - subject
+    TokenObtainPair:
+      type: object
+      properties:
+        email:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - email
+      - password
+      - refresh
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          writeOnly: true
+      required:
+      - access
+      - refresh
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

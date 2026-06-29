@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "apps.emails",
     "apps.summaries",
     "apps.reports",
+    "drf_spectacular",
 
 ]
 
@@ -149,13 +150,34 @@ AUTH_USER_MODEL = "accounts.Account"
 
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
 
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
+
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Email Context & Summarization API",
+    "DESCRIPTION": """
+API for managing firms, clients, emails and AI generated summaries.
+
+Authentication:
+- Obtain JWT Token
+- Use Bearer Token
+- Access secured endpoints
+""",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+
+    "SWAGGER_UI_SETTINGS": {
+        "persistAuthorization": True,
+    }
 }
 
 SIMPLE_JWT = {
@@ -163,10 +185,17 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
 
-
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "email-summary-cache"
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
     }
 }
+
+
+LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/login/"

@@ -70,6 +70,33 @@ class Command(BaseCommand):
                 "first_name": "Alice",
                 "last_name": "Johnson",
             },
+            {
+                "username": "rohit",
+                "email": "ca.rohit@ascend.com",
+                "password": "Accountant@123",
+                "role": Account.Role.ACCOUNTANT,
+                "firm": "Ascend CPA",
+                "first_name": "Rohit",
+                "last_name": "Gupta",
+            },
+            {
+                "username": "neha",
+                "email": "ca.neha@ascend.com",
+                "password": "Accountant@123",
+                "role": Account.Role.ACCOUNTANT,
+                "firm": "Ascend CPA",
+                "first_name": "Neha",
+                "last_name": "Verma",
+            },
+            {
+                "username": "karan",
+                "email": "ca.karan@elite.com",
+                "password": "Accountant@123",
+                "role": Account.Role.ACCOUNTANT,
+                "firm": "Elite Tax Consultants",
+                "first_name": "Karan",
+                "last_name": "Singh",
+            },
         ]
 
         for user_data in users:
@@ -211,6 +238,161 @@ class Command(BaseCommand):
                 "subject": "Verification",
                 "body": "We have received your documents. Verification is in progress.",
             },
+            {
+                "client": "ABC Pvt Ltd",
+                "accountant": "john@ascend.com",
+                "subject": "Request for Form-16",
+                "body": "Please upload your Form-16 for FY 2025-26.",
+            },
+            {
+                "client": "ABC Pvt Ltd",
+                "accountant": "ca.rohit@ascend.com",
+                "subject": "Reminder - Form-16",
+                "body": "We are still waiting for your Form-16 documents.",
+            },
+            {
+                "client": "ABC Pvt Ltd",
+                "accountant": "admin@ascend.com",
+                "subject": "Bank Statements",
+                "body": "Please upload bank statements from April to March.",
+            },
+            {
+                "client": "ABC Pvt Ltd",
+                "accountant": "john@ascend.com",
+                "subject": "Reminder - Bank Statements",
+                "body": "Kindly share bank statements again.",
+            },
+            {
+                "client": "ABC Pvt Ltd",
+                "accountant": "ca.neha@ascend.com",
+                "subject": "Investment Proof",
+                "body": "Please upload investment proof under section 80C.",
+            },
+            {
+                "client": "ABC Pvt Ltd",
+                "accountant": "john@ascend.com",
+                "subject": "Investment Proof Reminder",
+                "body": "Reminder for pending investment proof documents.",
+            },
+            {
+                "client": "ABC Pvt Ltd",
+                "accountant": "admin@ascend.com",
+                "subject": "Acknowledgement",
+                "body": "Thank you. We have received your Form-16.",
+            },
+
+
+
+            # ---------------- XYZ Technologies ----------------
+
+            {
+                "client": "XYZ Technologies",
+                "accountant": "john@ascend.com",
+                "subject": "GST Returns",
+                "body": "Please send GST returns for the last quarter.",
+            },
+            {
+                "client": "XYZ Technologies",
+                "accountant": "ca.rohit@ascend.com",
+                "subject": "GST Reminder",
+                "body": "Reminder to upload GST returns.",
+            },
+            {
+                "client": "XYZ Technologies",
+                "accountant": "ca.neha@ascend.com",
+                "subject": "GST Reminder Again",
+                "body": "We have not received GST documents yet.",
+            },
+            {
+                "client": "XYZ Technologies",
+                "accountant": "admin@ascend.com",
+                "subject": "Purchase Register",
+                "body": "Please upload purchase register.",
+            },
+            {
+                "client": "XYZ Technologies",
+                "accountant": "john@ascend.com",
+                "subject": "Purchase Register Reminder",
+                "body": "Kindly upload purchase register.",
+            },
+            {
+                "client": "XYZ Technologies",
+                "accountant": "admin@ascend.com",
+                "subject": "Acknowledgement",
+                "body": "Thank you. GST documents received.",
+            },
+
+
+
+            # ---------------- Bright Solutions ----------------
+
+            {
+                "client": "Bright Solutions",
+                "accountant": "alice@elite.com",
+                "subject": "Salary Slips",
+                "body": "Please upload salary slips for all directors.",
+            },
+            {
+                "client": "Bright Solutions",
+                "accountant": "ca.karan@elite.com",
+                "subject": "Reminder Salary Slips",
+                "body": "Salary slips are still pending.",
+            },
+            {
+                "client": "Bright Solutions",
+                "accountant": "admin@elite.com",
+                "subject": "Director PAN",
+                "body": "Please upload PAN cards of directors.",
+            },
+            {
+                "client": "Bright Solutions",
+                "accountant": "alice@elite.com",
+                "subject": "PAN Reminder",
+                "body": "Reminder to upload PAN cards.",
+            },
+            {
+                "client": "Bright Solutions",
+                "accountant": "admin@elite.com",
+                "subject": "Acknowledgement",
+                "body": "Documents received successfully.",
+            },
+
+
+
+            # ---------------- Green Enterprises ----------------
+
+            {
+                "client": "Green Enterprises",
+                "accountant": "alice@elite.com",
+                "subject": "ITR Documents",
+                "body": "Please upload documents for ITR filing.",
+            },
+            {
+                "client": "Green Enterprises",
+                "accountant": "ca.karan@elite.com",
+                "subject": "Reminder ITR Documents",
+                "body": "ITR documents are pending.",
+            },
+            {
+                "client": "Green Enterprises",
+                "accountant": "admin@elite.com",
+                "subject": "Bank Statements",
+                "body": "Please upload latest bank statements.",
+            },
+            {
+                "client": "Green Enterprises",
+                "accountant": "alice@elite.com",
+                "subject": "Reminder Bank Statements",
+                "body": "Waiting for bank statements.",
+            },
+            {
+                "client": "Green Enterprises",
+                "accountant": "admin@elite.com",
+                "subject": "Verification",
+                "body": "We have received all documents. Verification in progress.",
+            },
+
+
         ]
 
         for index, email_data in enumerate(emails):

@@ -27,6 +27,11 @@ from apps.reports.views import (
     FirmReportAPIView,
     GlobalReportAPIView,
 )
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+    SpectacularRedocView,
+)
 from apps.accounts.views import login_view, logout_view
 
 urlpatterns = [
@@ -49,4 +54,9 @@ urlpatterns = [
     path("api/", include("apps.summaries.urls")),
 
     path("api/reports/", include("apps.reports.urls")),
+
+
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema",),
+
+    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui",),
 ]

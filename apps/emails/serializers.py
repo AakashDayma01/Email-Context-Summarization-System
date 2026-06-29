@@ -3,7 +3,13 @@ from .models import Email
 
 
 class EmailSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Email model.
 
+    Converts Email model instances into JSON format for API responses.
+    The associated client and accountant are represented using their
+    string representations instead of their primary keys.
+    """
     accountant = serializers.StringRelatedField()
     client = serializers.StringRelatedField()
 
