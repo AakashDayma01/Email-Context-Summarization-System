@@ -33,30 +33,29 @@ from drf_spectacular.views import (
     SpectacularRedocView,
 )
 from apps.accounts.views import login_view, logout_view
-
 urlpatterns = [
     path("admin/", admin.site.urls),
 
-    path("", dashboard, name="dashboard"),
-    path("login/", login_view, name="login"),
-    path("logout/", logout_view, name="logout"),
-    path("clients/", include("apps.clients.urls")),
-    path("summary/", include("apps.summaries.urls")),
-    path("reports/", include("apps.reports.urls")),    
-
+    # -----------------------
+    # UI
+    # -----------------------
+    # -----------------------
+    # AUTH API
+    # -----------------------
     path("api/token/", TokenObtainPairView.as_view()),
     path("api/token/refresh/", TokenRefreshView.as_view()),
 
+    # -----------------------
+    # CLEAN API STRUCTURE
+    # -----------------------
     path("api/clients/", include("apps.clients.api_urls")),
-    path("api/", include("apps.emails.urls")),
-
-    path("api/", include("apps.emails.urls")),
-    path("api/", include("apps.summaries.urls")),
-
+    path("api/emails/", include("apps.emails.urls")),
+    path("api/summary/", include("apps.summaries.urls")),
     path("api/reports/", include("apps.reports.urls")),
 
-
-    path("api/schema/", SpectacularAPIView.as_view(), name="schema",),
-
-    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui",),
+    # -----------------------
+    # Swagger / OpenAPI
+    # -----------------------
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
 ]
