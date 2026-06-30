@@ -1,146 +1,227 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Client
-
-# Create your views here.
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
-from .serializers import ClientSerializer
-
-from apps.emails.models import Email
-from apps.summaries.models import EmailSummary
-from apps.summaries.utils.encryption import decrypt
 from django.core.cache import cache
 import json
+
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+
+from .models import Client
+from .serializers import ClientSerializer
+
+from apps.emails.services.permissions import get_emails_for_user
+from apps.clients.services.permissions import get_clients_for_user
+
+from apps.summaries.models import EmailSummary
 from apps.summaries.services.summarizer import generate_summary
-from apps.summaries.utils.encryption import encrypt
+from apps.summaries.utils.encryption import encrypt, decrypt
 
 
+# =========================================================
+# API : CLIENT LIST
+# =========================================================
 class ClientListAPIView(generics.ListAPIView):
     """
-    API view to retrieve a list of clients.
+    Retrieve clients based on the authenticated user's permissions.
 
-    Superusers can access all clients, while regular users
-    can only access clients belonging to their firm.
+    Access Rules:
+    - Super Admin -> All clients
+    - Accountant -> Assigned clients only
+    - Client -> Own client profile only
     """
+
     serializer_class = ClientSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """
-        Return queryset of clients based on user permissions.
-        """
-        user = self.request.user
+        return get_clients_for_user(self.request.user)
 
-        if user.is_superuser:
-            return Client.objects.all()
-        return Client.objects.filter(firm=user.firm)
 
+# =============================c============================
+# API : CLIENT DETAIL
+# =========================================================
+from rest_framework.response import Response
+from django.core.cache import cache
+import json
 
 class ClientDetailAPIView(generics.RetrieveAPIView):
     """
-    API view to retrieve a single client detail.
+    Retrieve a single client with cached email summary.
 
-    Access is restricted based on user permissions:
-    superusers can access all clients, others only their firm clients.
+    Flow:
+    1. Check Redis cache
+    2. If miss → check DB encrypted summary
+    3. If still missing/outdated → regenerate
     """
+
     serializer_class = ClientSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """
-        Return queryset of clients based on user permissions.
-        """
-        user = self.request.user
+        return get_clients_for_user(self.request.user)
 
-        if user.is_superuser:
-            return Client.objects.all()
-        return Client.objects.filter(firm=user.firm)
+    def retrieve(self, request, *args, **kwargs):
+        client = self.get_object()
 
+        emails = get_emails_for_user(request.user, client)
+        email_count = emails.count()
 
+        cache_key = f"summary_{client.id}"
+
+        # -------------------------
+        # STEP 1: REDIS CHECK
+        # -------------------------
+        summary_data = cache.get(cache_key)
+
+        if summary_data:
+            print("🚀 API SUMMARY SOURCE: REDIS")
+            return Response({
+                "source": "redis",
+                "client": ClientSerializer(client).data,
+                "summary": summary_data,
+            })
+
+        print("⚠️ API REDIS MISS - checking DB")
+
+        # -------------------------
+        # STEP 2: DB CHECK
+        # -------------------------
+        summary = EmailSummary.objects.filter(client=client).first()
+
+        if summary:
+            print("🗄️ API SUMMARY SOURCE: DATABASE")
+
+            summary_data = json.loads(
+                decrypt(summary.encrypted_summary)
+            )
+
+            # store back into redis
+            cache.set(cache_key, summary_data, timeout=3600)
+
+            return Response({
+                "source": "database",
+                "client": ClientSerializer(client).data,
+                "summary": summary_data,
+            })
+
+        # -------------------------
+        # STEP 3: GENERATE NEW
+        # -------------------------
+        print("⚠️ NO CACHE / DB → generating summary")
+
+        summary_data = generate_summary(emails)
+
+        cache.set(cache_key, summary_data, timeout=3600)
+
+        encrypted_summary = encrypt(json.dumps(summary_data))
+
+        EmailSummary.objects.create(
+            client=client,
+            encrypted_summary=encrypted_summary,
+            emails_processed=email_count,
+        )
+
+        return Response({
+            "source": "generated",
+            "client": ClientSerializer(client).data,
+            "summary": summary_data,
+        })
+
+# =========================================================
+# TEMPLATE : CLIENT LIST
+# =========================================================
 @login_required
 def client_list(request):
     """
-    Render a list of clients for authenticated users.
-
-    Superusers can see all clients, while normal users
-    can only see clients associated with their firm.
+    Display clients visible to the logged-in user.
     """
-    if request.user.is_superuser:
-        clients = Client.objects.select_related("firm").all()
-    else:
-        clients = Client.objects.select_related("firm").filter(firm=request.user.firm)
 
-    return render(request, "clients/list.html", {"clients": clients})
+    clients = get_clients_for_user(request.user)
 
+    return render(
+        request,
+        "clients/list.html",
+        {
+            "clients": clients
+        },
+    )
+
+
+# =========================================================
+# TEMPLATE : CLIENT DETAIL
+# =========================================================
 @login_required
 def client_detail(request, pk):
     """
-    Display client details along with the latest email summary.
+    Display client details and email summary.
 
     Workflow:
-    1. Fetch the client and all associated emails.
-    2. Check Redis for a cached summary.
-    3. Read summary metadata from PostgreSQL.
-    4. Compare current email count with emails_processed.
-    5. If outdated, regenerate the summary.
-    6. Otherwise use Redis if available.
-    7. If Redis is empty, decrypt PostgreSQL summary and cache it.
+    1. Verify user permission.
+    2. Retrieve emails visible to the user.
+    3. Check Redis cache.
+    4. Check PostgreSQL summary.
+    5. Regenerate summary if emails changed.
+    6. Cache regenerated summary.
+    7. Render client page.
     """
+
+    # ----------------------------------------
+    # Permission check
+    # ----------------------------------------
     client = get_object_or_404(
-        Client.objects.select_related("firm"),
-        pk=pk
+        get_clients_for_user(request.user),
+        pk=pk,
     )
 
-    emails = (
-        Email.objects
-        .filter(client=client)
-        .order_by("sent_at")
+    # ----------------------------------------
+    # Retrieve permitted emails
+    # ----------------------------------------
+    emails = get_emails_for_user(
+        request.user,
+        client,
     )
 
     email_count = emails.count()
 
     cache_key = f"summary_{client.id}"
 
-    # ----------------------------
-    # STEP 1 : Check Redis
-    # ----------------------------
+    # ----------------------------------------
+    # Step 1 : Check Redis
+    # ----------------------------------------
     summary_data = cache.get(cache_key)
-    
-    # ----------------------------
-    # STEP 2 : Get summary metadata
-    # ----------------------------
+
+    if summary_data:
+        print("🚀 SUMMARY SOURCE: REDIS CACHE")
+    else:
+        print("⚠️ REDIS MISS - checking database")
+    # ----------------------------------------
+    # Step 2 : Fetch PostgreSQL summary
+    # ----------------------------------------
     summary = (
         EmailSummary.objects
-        .only("encrypted_summary", "emails_processed")
         .filter(client=client)
         .first()
     )
 
-    # ----------------------------
-    # STEP 3 : Determine whether
-    # summary needs regeneration
-    # ----------------------------
-    regenerate = False
+    # ----------------------------------------
+    # Step 3 : Determine regeneration
+    # ----------------------------------------
+    regenerate = (
+        summary is None or
+        summary.emails_processed != email_count
+    )
 
-    if summary is None:
-        regenerate = True
-
-    elif summary.emails_processed != email_count:
-        regenerate = True
-
-    # ----------------------------
-    # STEP 4 : Regenerate summary
-    # ----------------------------
+    # ----------------------------------------
+    # Step 4 : Generate summary
+    # ----------------------------------------
     if regenerate:
 
         summary_data = generate_summary(emails)
 
-        # Update Redis
         cache.set(
             cache_key,
             summary_data,
-            timeout=3600
+            timeout=3600,
         )
 
         encrypted_summary = encrypt(
@@ -152,7 +233,7 @@ def client_detail(request, pk):
             EmailSummary.objects.create(
                 client=client,
                 encrypted_summary=encrypted_summary,
-                emails_processed=email_count
+                emails_processed=email_count,
             )
 
         else:
@@ -161,10 +242,11 @@ def client_detail(request, pk):
             summary.emails_processed = email_count
             summary.save()
 
-    # ----------------------------
-    # STEP 5 : Redis miss
-    # ----------------------------
+    # ----------------------------------------
+    # Step 5 : Redis Miss
+    # ----------------------------------------
     elif summary_data is None:
+
         summary_data = json.loads(
             decrypt(summary.encrypted_summary)
         )
@@ -172,19 +254,18 @@ def client_detail(request, pk):
         cache.set(
             cache_key,
             summary_data,
-            timeout=3600
+            timeout=3600,
         )
-    # ----------------------------
-    # STEP 6 : Render page
-    # ----------------------------
-    context = {
-        "client": client,
-        "emails": emails,
-        "summary": summary_data,
-    }
 
+    # ----------------------------------------
+    # Step 6 : Render page
+    # ----------------------------------------
     return render(
         request,
         "clients/detail.html",
-        context
+        {
+            "client": client,
+            "emails": emails,
+            "summary": summary_data,
+        },
     )

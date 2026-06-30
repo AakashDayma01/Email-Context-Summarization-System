@@ -1,36 +1,56 @@
-from django.shortcuts import render
-from apps.emails.models import Email
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-
-from apps.clients.models import Client
-from apps.summaries.models import EmailSummary
-
-from django.contrib.auth.decorators import login_required
 from collections import defaultdict
 
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+from django.shortcuts import render
 
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from apps.clients.models import Client
+from apps.emails.models import Email
+from apps.summaries.models import EmailSummary
+
+
+# =========================================================
+# API : FIRM REPORT
+# =========================================================
 class FirmReportAPIView(APIView):
     """
-    API view to generate summary report for a specific firm.
+    Return report for the authenticated user's accessible clients.
 
-    Returns:
-    - total number of clients in the user's firm
-    - number of clients that have generated email summaries
-
-    Only authenticated users can access this endpoint.
+    Access Rules:
+    - Super Admin -> All clients
+    - Accountant -> Assigned clients only
+    - Client -> Not allowed
     """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """
-        Handle GET request and return firm-level analytics.
-        """
+
         user = request.user
 
-        clients = Client.objects.filter(firm=user.firm)
+        # Clients cannot access reports
+        if (
+            not user.is_superuser
+            and user.role == user.Role.CLIENT
+        ):
+            return Response(
+                {"detail": "Permission denied."},
+                status=403,
+            )
+
+        if user.is_superuser:
+            clients = Client.objects.all()
+            firm_name = "All Firms"
+        else:
+            clients = Client.objects.filter(
+                accountants=user
+            ).distinct()
+            firm_name = user.firm.name
+
         total_clients = clients.count()
 
         clients_with_summary = EmailSummary.objects.filter(
@@ -38,72 +58,147 @@ class FirmReportAPIView(APIView):
         ).count()
 
         return Response({
-            "firm": user.firm.name,
+            "firm": firm_name,
             "total_clients": total_clients,
-            "clients_with_summary": clients_with_summary
+            "clients_with_summary": clients_with_summary,
         })
 
 
+# =========================================================
+# API : GLOBAL REPORT
+# =========================================================
 class GlobalReportAPIView(APIView):
     """
-    API view to generate system-wide summary report.
+    Return summary count grouped by firm.
 
-    Only superusers can access this endpoint.
-
-    Returns number of email summaries grouped by firm.
+    Access Rules:
+    - Super Admin -> Allowed
+    - Accountant -> Not allowed
+    - Client -> Not allowed
     """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """
-        Handle GET request and return summary count per firm.
-        """
+
         if not request.user.is_superuser:
-            return Response({"error": "Not allowed"}, status=403)
+            return Response(
+                {"detail": "Permission denied."},
+                status=403,
+            )
 
         data = defaultdict(int)
 
-        summaries = EmailSummary.objects.all().select_related("client__firm")
+        summaries = (
+            EmailSummary.objects
+            .select_related("client__firm")
+        )
 
         for summary in summaries:
-            firm_name = summary.client.firm.name
-            data[firm_name] += 1
+            data[summary.client.firm.name] += 1
 
         return Response([
-            {"firm": k, "summaries": v}
-            for k, v in data.items()
+            {
+                "firm": firm,
+                "summaries": count,
+            }
+            for firm, count in data.items()
         ])
 
 
+# =========================================================
+# TEMPLATE : DASHBOARD
+# =========================================================
 @login_required
 def dashboard(request):
     """
-    Render system dashboard with overall statistics.
+    Render dashboard based on user role.
 
-    Displays:
-    - total clients
-    - total emails
-    - total email summaries
+    Access Rules:
+    - Super Admin -> Entire system
+    - Accountant -> Assigned clients
+    - Client -> Not allowed
     """
-    context = {
-        "total_clients": Client.objects.count(),
-        "total_emails": Email.objects.count(),
-        "total_summaries": EmailSummary.objects.count(),
-    }
 
-    return render(request, "dashboard.html", context)
+    user = request.user
+
+    if (
+        not user.is_superuser
+        and user.role == user.Role.CLIENT
+    ):
+        return render(
+            request,
+            "reports/not_allowed.html",
+        )
+
+    if user.is_superuser:
+
+        context = {
+            "total_clients": Client.objects.count(),
+            "total_emails": Email.objects.count(),
+            "total_summaries": EmailSummary.objects.count(),
+        }
+
+    else:
+
+        clients = Client.objects.filter(
+            accountants=user
+        ).distinct()
+
+        context = {
+            "total_clients": clients.count(),
+            "total_emails": Email.objects.filter(
+                client__in=clients
+            ).count(),
+            "total_summaries": EmailSummary.objects.filter(
+                client__in=clients
+            ).count(),
+        }
+
+    return render(
+        request,
+        "dashboard.html",
+        context,
+    )
 
 
+# =========================================================
+# TEMPLATE : FIRM REPORT
+# =========================================================
 @login_required
 def firm_report(request):
     """
-    Render firm-level report for logged-in user.
+    Display report for accessible clients.
 
-    Shows:
-    - total clients in firm
-    - number of clients with email summaries
+    Access Rules:
+    - Super Admin -> All clients
+    - Accountant -> Assigned clients
+    - Client -> Not allowed
     """
-    clients = Client.objects.filter(firm=request.user.firm)
+
+    user = request.user
+
+    if (
+        not user.is_superuser
+        and user.role == user.Role.CLIENT
+    ):
+        return render(
+            request,
+            "reports/not_allowed.html",
+        )
+
+    if user.is_superuser:
+
+        clients = Client.objects.all()
+        firm = "All Firms"
+
+    else:
+
+        clients = Client.objects.filter(
+            accountants=user
+        ).distinct()
+
+        firm = user.firm
 
     total_clients = clients.count()
 
@@ -115,32 +210,48 @@ def firm_report(request):
         request,
         "reports/firm_report.html",
         {
-            "firm": request.user.firm,
+            "firm": firm,
             "total_clients": total_clients,
             "clients_with_summary": clients_with_summary,
         },
     )
 
 
+# =========================================================
+# TEMPLATE : GLOBAL REPORT
+# =========================================================
 @login_required
 def global_report(request):
     """
-    Render global report page (superuser only).
+    Display system-wide report.
 
-    Displays number of email summaries grouped by firm.
+    Access Rules:
+    - Super Admin -> Allowed
+    - Accountant -> Not allowed
+    - Client -> Not allowed
     """
+
     if not request.user.is_superuser:
-        return render(request, "reports/not_allowed.html")
+        return render(
+            request,
+            "reports/not_allowed.html",
+        )
 
     data = defaultdict(int)
 
-    summaries = EmailSummary.objects.select_related("client__firm")
+    summaries = (
+        EmailSummary.objects
+        .select_related("client__firm")
+    )
 
     for summary in summaries:
         data[summary.client.firm.name] += 1
 
     reports = [
-        {"firm": firm, "count": count}
+        {
+            "firm": firm,
+            "count": count,
+        }
         for firm, count in data.items()
     ]
 
@@ -148,6 +259,6 @@ def global_report(request):
         request,
         "reports/global_report.html",
         {
-            "reports": reports
+            "reports": reports,
         },
     )

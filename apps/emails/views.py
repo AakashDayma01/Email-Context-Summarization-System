@@ -1,63 +1,86 @@
-from django.shortcuts import render,get_object_or_404, redirect
-
-# Create your views here.
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
-
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
 
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 
 from .models import Email
 from .serializers import EmailSerializer
-from apps.clients.models import Client
-from django.contrib.auth.decorators import login_required
+
+from apps.clients.services.permissions import get_clients_for_user
+from apps.emails.services.permissions import get_emails_for_user
 
 
+# =========================================================
+# API : CLIENT EMAIL LIST
+# =========================================================
 class ClientEmailListAPIView(generics.ListAPIView):
     """
-    API view to list all emails related to a specific client.
+    Retrieve emails for a specific client.
 
-    Superusers can access all emails for the client,
-    while normal users can only access emails belonging to clients
-    within their firm.
+    Access Rules:
+    - Super Admin -> Can view emails of all clients.
+    - Accountant -> Can view emails of assigned clients only.
+    - Client -> Can view only their own emails.
     """
+
     serializer_class = EmailSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """
-        Return emails for a specific client based on user permissions.
+        Return emails visible to the authenticated user.
         """
-        user = self.request.user
-        client_id = self.kwargs["pk"]
 
-        client = Client.objects.get(id=client_id)
+        client = get_object_or_404(
+            get_clients_for_user(self.request.user),
+            pk=self.kwargs["pk"],
+        )
 
-        if user.is_superuser:
-            return Email.objects.filter(client=client)
+        return get_emails_for_user(
+            self.request.user,
+            client,
+        )
 
-        return Email.objects.filter(client=client, client__firm=user.firm)
 
-
+# =========================================================
+# TEMPLATE : ADD MOCK EMAIL
+# =========================================================
 @login_required
 def add_mock_email(request, pk):
     """
-    Create a mock email entry for a specific client.
+    Create a mock email for a client.
 
-    This view allows authenticated users to add an email
-    (subject and body) for a given client. After creation,
-    the user is redirected to the client detail page.
+    Access Rules:
+    - Super Admin -> Allowed
+    - Accountant -> Allowed for assigned clients
+    - Client -> Not allowed
     """
-    client = get_object_or_404(Client, pk=pk)
+
+    client = get_object_or_404(
+        get_clients_for_user(request.user),
+        pk=pk,
+    )
+
+    # Clients cannot create emails
+    if (
+        not request.user.is_superuser
+        and request.user.role == request.user.Role.CLIENT
+    ):
+        return HttpResponseForbidden(
+            "Clients are not allowed to create emails."
+        )
 
     if request.method == "POST":
         Email.objects.create(
             client=client,
             accountant=request.user,
             subject=request.POST["subject"],
-            body=request.POST["body"]
+            body=request.POST["body"],
         )
 
-    return redirect("client-detail", pk=pk)
+    return redirect(
+        "client-detail",
+        pk=pk,
+    )

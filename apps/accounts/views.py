@@ -1,26 +1,15 @@
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
 
-
 def login_view(request):
-    """
-    Authenticate a user and create a new login session.
-
-    For POST requests, the submitted email and password are validated
-    using Django's authentication system. On successful authentication,
-    the user is redirected to the dashboard. If authentication fails,
-    the login page is re-rendered with an error message.
-
-    For GET requests, the login page is displayed.
-    """
     if request.method == "POST":
-        email = request.POST.get("username")
+        email = request.POST.get("email")
         password = request.POST.get("password")
 
         user = authenticate(
             request,
             username=email,
-            password=password
+            password=password,
         )
 
         if user:
@@ -30,11 +19,10 @@ def login_view(request):
         return render(
             request,
             "login.html",
-            {"error": "Invalid credentials"}
+            {"error": "Invalid email or password"},
         )
 
     return render(request, "login.html")
-
 
 def logout_view(request):
     """
