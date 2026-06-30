@@ -1,8 +1,7 @@
 import json
 
-from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -18,7 +17,26 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 class GenerateSummaryAPIView(APIView):                      
+    """
+    Generate an AI-powered summary for a client's email history.
 
+    Workflow:
+    ----------
+    1. Validate the authenticated user's access to the client.
+    2. Retrieve emails visible to the user.
+    3. Check Redis cache for an existing summary.
+    4. If cache exists, return the cached summary.
+    5. Otherwise, generate a new summary using the AI service.
+    6. Cache the generated summary in Redis.
+    7. Encrypt and store the summary in PostgreSQL.
+    8. Return the generated summary.
+
+    Access Rules:
+    -------------
+    - Super Admin -> Any client
+    - Accountant -> Assigned clients only
+    - Client -> Own client only
+    """
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
@@ -47,7 +65,18 @@ class GenerateSummaryAPIView(APIView):
         }
     )
     def post(self, request, pk):
+        """
+        Generate or retrieve a cached summary for a client.
 
+        Args:
+            request: Authenticated HTTP request.
+            pk (int): Client primary key.
+
+        Returns:
+            Response:
+                - Cached summary if available.
+                - Newly generated summary otherwise.
+        """
         client = get_object_or_404(
             get_clients_for_user(request.user),
             pk=pk
@@ -97,9 +126,14 @@ class GenerateSummaryAPIView(APIView):
 
 class RefreshSummaryAPIView(APIView):
     """
-    Regenerate a summary.
+    Regenerate a client's email summary.
 
-    Deletes Redis cache then creates a fresh summary.
+    Workflow:
+    ----------
+    1. Validate user permissions.
+    2. Remove the existing Redis cache.
+    3. Delete the existing database summary.
+    4. Generate a completely new summary.
     """
 
     permission_classes = [IsAuthenticated]
@@ -122,61 +156,3 @@ class RefreshSummaryAPIView(APIView):
 
         return GenerateSummaryAPIView().post(request, pk)
 
-
-@login_required
-def generate_summary_page(request, pk):
-    """
-    Web view to generate a client summary.
-    """
-
-    client = get_object_or_404(
-        get_clients_for_user(request.user),
-        pk=pk
-    )
-
-    emails = get_emails_for_user(request.user, client)
-
-    if not emails.exists():
-        return redirect("client-detail", pk=pk)
-
-    summary_data = generate_summary(emails)
-
-    cache.set(
-        f"summary_{client.id}",
-        summary_data,
-        timeout=3600,
-    )
-
-    encrypted_summary = encrypt(
-        json.dumps(summary_data)
-    )
-
-    summary, _ = EmailSummary.objects.get_or_create(
-        client=client
-    )
-
-    summary.encrypted_summary = encrypted_summary
-    summary.emails_processed = emails.count()
-    summary.save()
-
-    return redirect("client-detail", pk=pk)
-
-
-@login_required
-def refresh_summary_page(request, pk):
-    """
-    Refresh summary from the web interface.
-    """
-
-    client = get_object_or_404(
-        get_clients_for_user(request.user),
-        pk=pk
-    )
-
-    cache.delete(f"summary_{client.id}")
-
-    EmailSummary.objects.filter(
-        client=client
-    ).delete()
-
-    return generate_summary_page(request, pk)

@@ -16,46 +16,22 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from rest_framework_simplejwt.views import  TokenObtainPairView, TokenRefreshView
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
-
-from apps.reports.views import (
-    dashboard,
-    FirmReportAPIView,
-    GlobalReportAPIView,
-)
-from drf_spectacular.views import (
-    SpectacularAPIView,
-    SpectacularSwaggerView,
-    SpectacularRedocView,
-)
-from apps.accounts.views import login_view, logout_view
 urlpatterns = [
     path("admin/", admin.site.urls),
-
-    # -----------------------
-    # UI
-    # -----------------------
-    # -----------------------
     # AUTH API
-    # -----------------------
     path("api/token/", TokenObtainPairView.as_view()),
     path("api/token/refresh/", TokenRefreshView.as_view()),
 
-    # -----------------------
     # CLEAN API STRUCTURE
-    # -----------------------
     path("api/clients/", include("apps.clients.api_urls")),
     path("api/emails/", include("apps.emails.urls")),
     path("api/summary/", include("apps.summaries.urls")),
     path("api/reports/", include("apps.reports.urls")),
 
-    # -----------------------
     # Swagger / OpenAPI
-    # -----------------------
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
 ]
